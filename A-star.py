@@ -3,10 +3,6 @@ import heapq
 from heuristics import manhattan_heuristic, euclidean_heuristic
 
 def bfs(start_node, goal_node , heuristic="Manhattan"):
-    def heuristic(state):
-        return sum(
-            1 for i in range(9) if state[i] != 0 and state[i] != goal_node[i]
-        )
     pq = []
     h_start = heuristic(start_node)
     heapq.heappush(pq, (h_start, 0 , start_node ))  # (f , g , node) ( f(n) = g(n) + h(n) )
