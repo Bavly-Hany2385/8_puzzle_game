@@ -1,0 +1,14 @@
+<div class="board">
+  <div 
+    *ngFor="let tile of currentTiles ;trackBy: trackByTile" 
+    class="tile" 
+    [class.empty]="tile.value === 0"
+    
+    [style.transform]="'translate(' + (tile.col * 105) + 'px, ' + (tile.row * 105) + 'px)'">
+    
+    {{ tile.value !== 0 ? tile.value : '' }}
+    
+  </div>
+</div>
+
+<a class="start-button" (click)="start()">Start Animation</a>
