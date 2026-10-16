@@ -2,9 +2,14 @@ import helpers as help
 import heapq
 from heuristics import manhattan_heuristic, euclidean_heuristic
 
-def bfs(start_node, goal_node , heuristic="Manhattan"):
+def A_star(start_node, goal_node , heuristic="manhattan"):
     pq = []
-    h_start = heuristic(start_node)
+    h_start = 0
+    if heuristic == "manhattan":
+        h_start = manhattan_heuristic(start_node, goal_node)
+    elif heuristic == "euclidean":
+        h_start = euclidean_heuristic(start_node, goal_node)
+        
     heapq.heappush(pq, (h_start, 0 , start_node ))  # (f , g , node) ( f(n) = g(n) + h(n) )
 
     parent_map = {start_node: None}
@@ -36,7 +41,7 @@ if __name__ == "__main__":
     start_node = (1,0,2,7,5,4,8,6,3) 
     goal_node = (0,1,2,3,4,5,6,7,8)
     
-    path = bfs(start_node, goal_node, heuristic="manhattan")
+    path = A_star(start_node, goal_node, heuristic="manhattan")
     
     for state in path:
         state_2d = [state[i:i+3] for i in range(0, len(state), 3)]
