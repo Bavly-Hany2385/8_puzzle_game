@@ -8,3 +8,12 @@ export interface States {
   emptyTileRow: number;
   emptyTileCol: number;
 }
+export type Algorithm = 'bfs' | 'dfs' | 'iterative_deepening' | 'a_star';
+export type Heuristic = 'manhattan' |'euclidean' ;
+
+export interface SolveRequest {
+  start_node: number[];
+  goal_node: number[];
+  algorithm: Algorithm;
+  heuristic?: Heuristic;
+}
