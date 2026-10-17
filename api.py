@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from bfs import bfs as bfs_search
 from dfs import dfs as dfs_search
 from AStar import A_star
-from iterative_dfs import dfs as iterative_dfs
+from iterative_deepening import iterative_deepening as depth_limited_search
 
 
 app = FastAPI()
@@ -32,9 +32,9 @@ def solve(request: SolveRequest):
     elif request.algorithm == "dfs":
         solver = dfs_search
         path = solver(start, goal , None, None)
-    elif request.algorithm == "iterative_dfs":
-        solver = iterative_dfs
-        path = solver(start, goal )
+    elif request.algorithm == "iterative_deepening":
+        solver = depth_limited_search
+        path = solver(start, goal, max_depth=100)
     elif request.algorithm == "a_star":
         solver = A_star
         path = solver(start, goal, heuristic=request.heuristic)
