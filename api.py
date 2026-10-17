@@ -41,7 +41,7 @@ def solve(request: SolveRequest):
         path = solver(start, goal)
     elif request.algorithm == "dfs":
         solver = dfs_search
-        path = solver(start, goal , None, None)
+        path = solver(start, goal )
     elif request.algorithm == "iterative_deepening":
         solver = depth_limited_search
         path = solver(start, goal, max_depth=100)

@@ -519,6 +519,8 @@ trackByTile(index: number, tile: Tile): number {
       next: (response) => {
         if (response.path) {
           this.path = this.map_(response.path);
+          console.log("Mapped path:", this.path);
+          
           this.start();
         } else {
           console.error("No solution found. Response:", response);
