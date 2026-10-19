@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { States, Tile } from '../../models/tile';
 import { CommonModule } from '@angular/common';
 import { SolveService } from '../../services/solveService';
 import { SolveRequest  , Heuristic } from '../../models/tile';
 import { FormsModule } from '@angular/forms';
+import { GameConfigService } from '../../services/gameConfigService';
+import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-board',
-  imports: [CommonModule , FormsModule],
+  imports: [CommonModule , FormsModule , RouterLink],
   templateUrl: './board.html',
   styleUrl: './board.css',
 })
@@ -30,12 +32,17 @@ export class Board implements OnInit {
     { row: 1, col: 0 }, { row: 1, col: 1 }, { row: 1, col: 2 },
     { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 }
   ];
-
+private gameConfig = inject(GameConfigService);
+  
   selectedTile: any = null;
 
   constructor(private solveService: SolveService) { }
 
-  ngOnInit() {}
+  ngOnInit() { const cfg = this.gameConfig.config();
+  if (cfg) {
+    this.algorithm = cfg.algoA.algorithm;
+    this.heuristic = cfg.algoA.heuristic ?? 'manhattan';
+  }}
 
   parse(text: string): number[] {
     return text.split(/[\s,]+/).filter(s => s !== '').map(Number);

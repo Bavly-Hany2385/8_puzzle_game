@@ -1,0 +1,85 @@
+<div class="city"></div>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<main class="screen">
+  <section class="left">
+    <header class="logo">
+      <div class="small">LIBERTY CITY AI LAB</div>
+      <h1>8 PUZZLE<span>Search Wars</span></h1>
+    </header>
+
+    <div class="panel">
+      <div class="head">
+        <span>{{ screen() === 'main' ? 'GAME MODE' : mode().title }}</span>
+        <span>{{ screen() === 'config' ? 'SETUP' : '' }}</span>
+      </div>
+
+      <ul class="list">
+        @if (screen() === 'main') {
+          @for (m of modes; track m.id; let i = $index) {
+            <li class="item" [class.sel]="i === idx()" (click)="onRow(i)" (mouseenter)="hover(i)">
+              <span>{{ m.title }}</span><small>{{ m.sub }}</small>
+            </li>
+          }
+        } @else {
+          @for (o of mode().opts; track o.key; let i = $index) {
+            <li class="item" [class.sel]="i === idx()" (click)="onRow(i)">
+              <span>{{ o.label }}</span>
+              <span class="val">
+                <span class="arr" (click)="onArrow(i, -1, $event)">◀</span>
+                <b>{{ valueOf(o) }}</b>
+                <span class="arr" (click)="onArrow(i, 1, $event)">▶</span>
+              </span>
+            </li>
+          }
+          <li class="item go" [class.sel]="idx() === mode().opts.length" (click)="onRow(mode().opts.length)">START</li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="right">
+    <div class="brief">
+      <h2>{{ current().title }}</h2>
+      <p>{{ current().desc }}</p>
+      <div class="tags">
+        @for (t of current().tags; track t) { <span class="tag">{{ t }}</span> }
+      </div>
+
+      <div class="boards">
+        <div>
+          <div class="board">
+            @for (t of startTiles; track $index) { <i [class.e]="!t">{{ t || '' }}</i> }
+          </div>
+          <div class="who">{{ labels().left }}</div>
+        </div>
+
+        @if (labels().right) {
+          <div class="vs">VS</div>
+          <div>
+            <div class="board">
+              @for (t of startTiles; track $index) { <i [class.e]="!t">{{ t || '' }}</i> }
+            </div>
+            <div class="who">{{ labels().right }}</div>
+          </div>
+        } @else {
+          <div class="vs">→</div>
+          <div>
+            <div class="board">
+              @for (t of goalTiles; track $index) { <i [class.e]="!t">{{ t || '' }}</i> }
+            </div>
+            <div class="who">GOAL</div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="hints">
+  <span><kbd>↑</kbd><kbd>↓</kbd>Select</span>
+  @if (screen() === 'config') { <span><kbd>←</kbd><kbd>→</kbd>Change</span> }
+  <span><kbd>Enter</kbd>Confirm</span>
+  <span><kbd>Esc</kbd>Back</span>
+</div>

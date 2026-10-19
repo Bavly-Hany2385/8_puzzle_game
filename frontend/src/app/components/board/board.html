@@ -37,21 +37,6 @@
     <input type="text" [(ngModel)]="goalText" placeholder="1 2 3 4 5 6 7 8 0" />
   </label>
 
-  <label>
-   Algorithm
-    <select [(ngModel)]="algorithm">
-      <option value="bfs">BFS</option>
-      <option value="dfs">DFS</option>
-      <option value="iterative_deepening">Iterative Deepening</option>
-      <option value="a_star">A*</option>
-    </select>
-  </label>
-<label *ngIf="algorithm === 'a_star'">
-  Heuristic
-  <select [(ngModel)]="heuristic">
-    <option value="manhattan">Manhattan</option>
-    <option value="euclidean">Euclidean</option>
-  </select>
-</label>
+  <a routerLink="/">Back to menu</a>
   <a class="start-button" (click)="solvePuzzle()">Solve</a>
 </div>
