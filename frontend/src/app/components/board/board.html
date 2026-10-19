@@ -1,18 +1,36 @@
-<div class="board">
-  <div 
-    *ngFor="let tile of currentTiles ;trackBy: trackByTile" 
-    class="tile" 
-    [class.empty]="tile.value === 0"
-    [style.transform]="'translate(' + (tile.col * 105) + 'px, ' + (tile.row * 105) + 'px)'">
-    {{ tile.value !== 0 ? tile.value : '' }}
+<div class="game-wrapper">
+  
+  <div class="sidebar">
+    <div 
+      *ngFor="let tile of availableTiles" 
+      class="sidebar-tile"
+      [class.selected]="selectedTile === tile"
+      (click)="selectFromSidebar(tile)">
+      {{ tile.value }}
+    </div>
+  </div>
+
+  <div class="board">
+    <div 
+      *ngFor="let cell of gridCells" 
+      class="grid-cell"
+      [style.left.px]="(cell.col * 105) + 10"
+      [style.top.px]="(cell.row * 105) + 10"
+      (click)="placeOnBoard(cell.row, cell.col)">
+    </div>
+
+    <div 
+      *ngFor="let tile of currentTiles; trackBy: trackByTile" 
+      class="tile" 
+      [class.empty]="tile.value === 0"
+      [style.transform]="'translate(' + (tile.col * 105) + 'px, ' + (tile.row * 105) + 'px)'"
+      (click)="returnToSidebar(tile)">
+      {{ tile.value !== 0 ? tile.value : '' }}
+    </div>
   </div>
 </div>
 
 <div class="controls">
-  <label>
-    Initial State
-    <input type="text" [(ngModel)]="startText" placeholder="1 2 5 3 4 0 6 7 8" />
-  </label>
 
   <label>
     Goal State
