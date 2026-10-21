@@ -1,0 +1,39 @@
+<div class="toolbar">
+  <button (click)="zoomOut()">−</button>
+  <span>{{ (zoom * 100) | number:'1.0-0' }}%</span>
+  <button (click)="zoomIn()">+</button>
+  <button (click)="resetZoom()">Reset</button>
+</div>
+
+<div class="tree-wrap">
+  <svg [attr.width]="width * zoom" [attr.height]="height * zoom" [attr.viewBox]="viewBox">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#000" />
+      </marker>
+    </defs>
+
+    <!-- arrows with Up/Down/Left/Right labels -->
+    <ng-container *ngFor="let l of links">
+      <line [attr.x1]="l.source.x" [attr.y1]="l.source.y + W"
+            [attr.x2]="l.target.x" [attr.y2]="l.target.y - 2"
+            class="edge" marker-end="url(#arrow)" />
+      <text [attr.x]="midX(l) + 4" [attr.y]="midY(l)" class="edge-label">
+        {{ l.target.data.move }}
+      </text>
+    </ng-container>
+
+    <!-- mini boards -->
+    <g *ngFor="let n of laid"
+       [attr.transform]="'translate(' + (n.x - W / 2) + ',' + n.y + ')'">
+      <rect [attr.width]="W" [attr.height]="W" class="board" />
+      <g *ngFor="let c of cells(n.data.state)">
+        <rect [attr.x]="c.x" [attr.y]="c.y" [attr.width]="c.c" [attr.height]="c.c" class="cell" />
+        <text *ngIf="c.v !== 0"
+              [attr.x]="c.x + c.c / 2" [attr.y]="c.y + c.c / 2 + 5"
+              text-anchor="middle" class="num" [class.correct]="c.correct">{{ c.v }}</text>
+      </g>
+    </g>
+  </svg>
+</div>

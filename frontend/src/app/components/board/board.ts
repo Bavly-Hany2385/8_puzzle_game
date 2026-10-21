@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { States, Tile } from '../../models/tile';
 import { CommonModule } from '@angular/common';
 import { SolveService } from '../../services/solveService';
@@ -6,21 +6,35 @@ import { SolveRequest  , Heuristic } from '../../models/tile';
 import { FormsModule } from '@angular/forms';
 import { GameConfigService } from '../../services/gameConfigService';
 import { RouterLink } from '@angular/router';
+import { SearchTree } from '../search-tree/search-tree'
+import { SearchNode } from '../../models/tile';
+
 @Component({
   selector: 'app-board',
-  imports: [CommonModule , FormsModule , RouterLink],
+  imports: [CommonModule , FormsModule , RouterLink, SearchTree],
   templateUrl: './board.html',
   styleUrl: './board.css',
 })
+
 export class Board implements OnInit {
   path: Array<States> = [];
-  currentTiles: Tile[] = [];
+  currentTiles: Tile[] = [
+    { row: 0, col: 0, value: 1 }, { row: 0, col: 1, value: 2 }, { row: 0, col: 2, value: 5 },
+            { row: 1, col: 0, value: 3 }, { row: 1, col: 1, value: 4 }, { row: 1, col: 2, value: 0 },
+            { row: 2, col: 0, value: 6 }, { row: 2, col: 1, value: 7 }, { row: 2, col: 2, value: 8 }
+  ];
   test_path: Array<Array<number>> = [];
   isRunning = false;
+  searchTree: SearchNode[] = [];
+  showTree = false;
 
-  startText = '0 0 0 0 0 0 0 0 0';
+  get goalArray(): number[]{
+    return this.parse(this.goalText);
+  }
+
+  startText = '1 2 5 3 4 0 6 7 8';
   goalText = '0 1 2 3 4 5 6 7 8';
-  algorithm: SolveRequest['algorithm'] = 'a_star';
+  algorithm: SolveRequest['algorithm'] = 'dfs';
   heuristic: Heuristic = 'manhattan';
   availableTiles = [
     { value: 1 }, { value: 2 }, { value: 3 },
@@ -70,7 +84,11 @@ private gameConfig = inject(GameConfigService);
 
   trackByTile(index: number, tile: Tile): number {
     return tile.value;
+  }
 
+  @HostListener('document:keydown.escape')
+  closeTree() {
+    this.showTree = false;
   }
 
   // path is initially a list of states and each state is a tuple of numbers 
@@ -127,11 +145,18 @@ private gameConfig = inject(GameConfigService);
     this.solveService.solve(request).subscribe({
       next: (response) => {
         if (response.path) {
+          this.searchTree = response.tree ?? [];
+          this.showTree = false;
           this.path = this.map_(response.path);
           console.log("Mapped path:", this.path);
+          console.log('tree size:', response.tree?.length);
+          console.log('roots:', response.tree?.filter(n => n.parent === null || n.parent === undefined));
+          console.log('first nodes:', response.tree?.slice(0, 5));
 
           this.start();
         } else {
+          this.searchTree = [];
+          this.showTree = false;
           alert("This puzzle configuration is unsolvable! Try a different arrangement.");
           this.currentTiles = [];
           this.availableTiles = [

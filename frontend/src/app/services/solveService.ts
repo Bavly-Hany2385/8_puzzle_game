@@ -2,12 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SolveRequest } from '../models/tile';
+import { SearchNode } from '../models/tile'
 
 
 
 export interface SolveResponse {
   path: number[][] | null;
   cost: number | null;
+  tree?: SearchNode[];
 }
 
 @Injectable({ providedIn: 'root' })

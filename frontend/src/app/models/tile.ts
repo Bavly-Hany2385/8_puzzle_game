@@ -3,11 +3,13 @@ export interface Tile {
   row: number;
   col: number;
 }
+
 export interface States {
   tiles: Tile[];
   emptyTileRow: number;
   emptyTileCol: number;
 }
+
 export type Algorithm = 'bfs' | 'dfs' | 'iterative_deepening' | 'a_star';
 export type Heuristic = 'manhattan' |'euclidean' ;
 
@@ -16,4 +18,11 @@ export interface SolveRequest {
   goal_node: number[];
   algorithm: Algorithm;
   heuristic?: Heuristic;
+}
+
+export interface SearchNode{
+  id: number;
+  parent: number | null;
+  state: number[];
+  move: string | null;
 }

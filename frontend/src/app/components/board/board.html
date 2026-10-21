@@ -39,4 +39,17 @@
 
   <a routerLink="/">Back to menu</a>
   <a class="start-button" (click)="solvePuzzle()">Solve</a>
+  <button (click)="showTree = !showTree" [disabled]="!searchTree.length">
+  {{ showTree ? 'Hide' : 'Show' }} search tree
+  </button>
+
+  <div class="modal-backdrop" *ngIf="showTree" (click)="showTree = false">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Search tree ({{ searchTree.length }} nodes)</h3>
+      <button class="close-btn" (click)="showTree = false">✕</button>
+    </div>
+    <app-search-tree class="modal-body" [nodes]="searchTree" [goal]="goalArray"></app-search-tree>
+  </div>
+  </div>
 </div>
