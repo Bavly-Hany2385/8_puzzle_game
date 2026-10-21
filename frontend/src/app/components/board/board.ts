@@ -18,11 +18,12 @@ import { SearchNode } from '../../models/tile';
 
 export class Board implements OnInit {
   path: Array<States> = [];
-  currentTiles: Tile[] = [
-    { row: 0, col: 0, value: 1 }, { row: 0, col: 1, value: 2 }, { row: 0, col: 2, value: 5 },
-            { row: 1, col: 0, value: 3 }, { row: 1, col: 1, value: 4 }, { row: 1, col: 2, value: 0 },
-            { row: 2, col: 0, value: 6 }, { row: 2, col: 1, value: 7 }, { row: 2, col: 2, value: 8 }
-  ];
+  // currentTiles: Tile[] = [
+  //   { row: 0, col: 0, value: 1 }, { row: 0, col: 1, value: 2 }, { row: 0, col: 2, value: 5 },
+  //           { row: 1, col: 0, value: 3 }, { row: 1, col: 1, value: 4 }, { row: 1, col: 2, value: 0 },
+  //           { row: 2, col: 0, value: 6 }, { row: 2, col: 1, value: 7 }, { row: 2, col: 2, value: 8 }
+  // ];
+  currentTiles: Tile[] = [];
   test_path: Array<Array<number>> = [];
   isRunning = false;
   searchTree: SearchNode[] = [];
@@ -32,7 +33,7 @@ export class Board implements OnInit {
     return this.parse(this.goalText);
   }
 
-  startText = '1 2 5 3 4 0 6 7 8';
+  startText = '0 0 0 0 0 0 0 0 0';
   goalText = '0 1 2 3 4 5 6 7 8';
   algorithm: SolveRequest['algorithm'] = 'dfs';
   heuristic: Heuristic = 'manhattan';
@@ -53,10 +54,24 @@ private gameConfig = inject(GameConfigService);
   constructor(private solveService: SolveService) { }
 
   ngOnInit() { const cfg = this.gameConfig.config();
-  if (cfg) {
-    this.algorithm = cfg.algoA.algorithm;
-    this.heuristic = cfg.algoA.heuristic ?? 'manhattan';
-  }}
+    
+    if (cfg) {
+      this.algorithm = cfg.algoA.algorithm;
+      this.heuristic = cfg.algoA.heuristic ?? 'manhattan';
+      
+      localStorage.setItem('savedAlgo', this.algorithm);
+      localStorage.setItem('savedHeuristic', this.heuristic);
+    } else {
+      const savedAlgo = localStorage.getItem('savedAlgo');
+      const savedHeuristic = localStorage.getItem('savedHeuristic');
+      console.log('Saved Algorithm:', savedAlgo);
+      
+      if (savedAlgo) {
+        this.algorithm = savedAlgo as SolveRequest['algorithm'];
+        this.heuristic = savedHeuristic as Heuristic;
+      }
+    }
+  }
 
   parse(text: string): number[] {
     return text.split(/[\s,]+/).filter(s => s !== '').map(Number);

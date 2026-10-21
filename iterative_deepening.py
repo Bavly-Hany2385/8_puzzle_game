@@ -1,8 +1,9 @@
 import helpers as help
+import TreeRecorder
 
-def _depth_limited_search(current_node, goal_node, depth_limit, visited, parent_map):
+def _depth_limited_search(current_node, current_id, goal_node, depth_limit, visited, record):
     if current_node == goal_node:
-        return help.get_path(current_node, parent_map)
+        return record.path_to_root(current_id), record.export_tree(current_id)
 
     if depth_limit <= 0:
         return None
@@ -10,13 +11,13 @@ def _depth_limited_search(current_node, goal_node, depth_limit, visited, parent_
     visited.add(current_node)
     children = help.generate_children(current_node)
 
-    for child in children:
+    for child, move in children: 
         if child not in visited:
-            parent_map[child] = current_node
-            result = _depth_limited_search(child, goal_node, depth_limit - 1, visited, parent_map)
+            child_id = record.add(child, parent=current_id, move=move)
+            
+            result = _depth_limited_search(child, child_id, goal_node, depth_limit - 1, visited, record)
             if result is not None:
                 return result
-            parent_map.pop(child, None)  # Remove child from parent_map if not found
     
     visited.remove(current_node)  # Remove current_node from visited to allow other paths
 
@@ -25,9 +26,11 @@ def _depth_limited_search(current_node, goal_node, depth_limit, visited, parent_
 def iterative_deepening(current_node, goal_node, max_depth=100):
     for depth_limit in range(max_depth + 1):
         visited = set()
-        parent_map = {current_node: None}
-        result = _depth_limited_search(current_node, goal_node, depth_limit, visited, parent_map)
+        record = TreeRecorder.TreeRecorder()
+        start_id = record.add(current_node, parent=None) 
+        
+        result = _depth_limited_search(current_node, start_id, goal_node, depth_limit, visited, record)
         if result is not None:
             return result
 
-    return None
+    return None, []

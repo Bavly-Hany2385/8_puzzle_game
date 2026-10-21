@@ -44,14 +44,14 @@ def solve(request: SolveRequest):
         path, tree = solver(start, goal )
     elif request.algorithm == "iterative_deepening":
         solver = depth_limited_search
-        path = solver(start, goal, max_depth=100)
+        path ,tree= solver(start, goal, max_depth=100)
     elif request.algorithm == "a_star":
         solver = A_star
-        path = solver(start, goal, heuristic=request.heuristic)
+        path ,tree= solver(start, goal, heuristic=request.heuristic)
     else:
         return {"error": "Invalid algorithm specified."}
     return {
         "path": path,
         "cost": len(path) - 1 if path else None, 
-        "tree": tree if request.algorithm == "bfs" or "dfs" else None #the if condition will be removed when applying the tree recorder to other algorithms
+        "tree": tree 
     }
