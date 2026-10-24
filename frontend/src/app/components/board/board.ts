@@ -142,10 +142,12 @@ private gameConfig = inject(GameConfigService);
       alert("Please place all 8 tiles on the board before solving.");
       return;
     }
+    
     console.log("Start Text:", this.startText);
     console.log("Goal Text:", this.goalText);
     console.log("Algorithm:", this.algorithm);
     console.log("Heuristic:", this.heuristic);
+    
     const request: SolveRequest = {
       start_node: this.parse(this.startText),
       goal_node: this.parse(this.goalText),
@@ -158,41 +160,45 @@ private gameConfig = inject(GameConfigService);
     }
 
     this.solveService.solve(request).subscribe({
-      next: (response) => {
+      next: (response: any) => {
+        if (response.error) {
+          this.searchTree = [];
+          this.showTree = false;
+          alert(response.error);
+          this.resetBoard();
+          return;
+        }
+
         if (response.path) {
           this.searchTree = response.tree ?? [];
           this.showTree = false;
           this.path = this.map_(response.path);
+          
           console.log("Mapped path:", this.path);
           console.log('tree size:', response.tree?.length);
-          console.log('roots:', response.tree?.filter(n => n.parent === null || n.parent === undefined));
-          console.log('first nodes:', response.tree?.slice(0, 5));
-
+          
           this.start();
         } else {
-          this.searchTree = [];
-          this.showTree = false;
-          alert("This puzzle configuration is unsolvable! Try a different arrangement.");
-          this.currentTiles = [];
-          this.availableTiles = [
-            { value: 1 }, { value: 2 }, { value: 3 },
-            { value: 4 }, { value: 5 }, { value: 6 },
-            { value: 7 }, { value: 8 }
-          ];
-          this.updateStartText();
+          alert("Could not find a solution for this configuration.");
+          this.resetBoard();
         }
       },
       error: (error: any) => {
         console.error("Error occurred while solving the puzzle:", error);
-        this.currentTiles = [];
-        this.availableTiles = [
-          { value: 1 }, { value: 2 }, { value: 3 },
-          { value: 4 }, { value: 5 }, { value: 6 },
-          { value: 7 }, { value: 8 }
-        ];
-        this.updateStartText();
+        alert("Server error occurred. Please try again.");
+        this.resetBoard();
       }
     });
+  }
+
+  resetBoard() {
+    this.currentTiles = [];
+    this.availableTiles = [
+      { value: 1 }, { value: 2 }, { value: 3 },
+      { value: 4 }, { value: 5 }, { value: 6 },
+      { value: 7 }, { value: 8 }
+    ];
+    this.updateStartText();
   }
 
   selectFromSidebar(tile: { value: number }) {

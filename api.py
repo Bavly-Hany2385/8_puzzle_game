@@ -6,6 +6,7 @@ from bfs import bfs as bfs_search
 from dfs import dfs as dfs_search
 from AStar import A_star
 from iterative_deepening import iterative_deepening as depth_limited_search
+from solvability import is_solvable  
 
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
@@ -35,6 +36,14 @@ class SolveRequest(BaseModel):
 def solve(request: SolveRequest):
     start = tuple(request.start_node)
     goal = tuple(request.goal_node)
+
+    if not is_solvable(start, goal):
+        return {
+            "error": "Unsolvable puzzle configuration.",
+            "path": None,
+            "cost": None,
+            "tree": []
+        }
 
     if request.algorithm == "bfs":
         solver = bfs_search
