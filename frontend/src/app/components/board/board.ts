@@ -28,9 +28,22 @@ export class Board implements OnInit {
   isRunning = false;
   searchTree: SearchNode[] = [];
   showTree = false;
+  speed = 6;
+  get stepMs(): number {
+    return 2200 - this.speed * 200;
+  }
+
+  get transitionMs(): number {
+    return Math.round(this.stepMs * 0.3);
+  }
 
   get goalArray(): number[]{
     return this.parse(this.goalText);
+  }
+
+  get goalPreview(): number[] {
+    const g = this.goalArray;
+    return this.isValidState(g) ? g : [];
   }
 
   startText = '0 0 0 0 0 0 0 0 0';
@@ -91,7 +104,7 @@ private gameConfig = inject(GameConfigService);
 
     for (let i = 1; i < this.path.length; i++) {
       this.currentTiles = this.path[i].tiles;
-      await this.delay(1000);
+      await this.delay(this.stepMs);
     }
     this.currentTiles = this.currentTiles.filter(tile => tile.value !== 0);
     this.isRunning = false;
@@ -237,6 +250,58 @@ private gameConfig = inject(GameConfigService);
       boardState[index] = tile.value;
     });
     this.startText = boardState.join(' ');
+  }
+
+  isValidState(arr: number[]): boolean {
+    return arr.length === 9 &&
+      [...arr].sort((a, b) => a - b).every((v, i) => v === i);
+  }
+
+  private shuffled(): number[] {
+    const a = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  private setBoard(state: number[]) {
+    this.currentTiles = state
+      .map((value, i) => ({ value, row: Math.floor(i / 3), col: i % 3 }))
+      .filter(t => t.value !== 0);
+    this.availableTiles = [];
+    this.selectedTile = null;
+    this.path = [];
+    this.searchTree = [];
+    this.showTree = false;
+    this.updateStartText();
+  }
+
+  generateRandomStart() {
+    if (this.isRunning) return;
+
+    const goal = this.goalArray;
+    let start: number[];
+    do {
+      start = this.shuffled();
+    } while (start.join(' ') === goal.join(' '));  
+
+    this.setBoard(start);
+  }
+
+  generateRandomGoal() {
+    if (this.isRunning) return;
+
+    const start = this.parse(this.startText);
+    let goal: number[];
+    do {
+      goal = this.shuffled();
+    } while (goal.join(' ') === start.join(' '));   
+    this.goalText = goal.join(' ');
+    this.path = [];
+    this.searchTree = [];
+    this.showTree = false;
   }
 
 }

@@ -24,6 +24,7 @@
       class="tile" 
       [class.empty]="tile.value === 0"
       [style.transform]="'translate(' + (tile.col * 105) + 'px, ' + (tile.row * 105) + 'px)'"
+      [style.transition-duration.ms]="transitionMs"
       (click)="returnToSidebar(tile)">
       {{ tile.value !== 0 ? tile.value : '' }}
     </div>
@@ -32,9 +33,29 @@
 
 <div class="controls">
 
+  <div class="goal-row">
+    <label>
+      Goal State
+      <input type="text" [(ngModel)]="goalText" placeholder="1 2 3 4 5 6 7 8 0" />
+    </label>
+
+    @if (goalPreview.length) {
+      <div class="goal-preview" title="Goal state">
+        @for (v of goalPreview; track v) {
+          <span [class.e]="v === 0">{{ v || '' }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="gen-row">
+    <button (click)="generateRandomStart()" [disabled]="isRunning">Random start</button>
+    <button (click)="generateRandomGoal()" [disabled]="isRunning">Random goal</button>
+  </div>
+
   <label>
-    Goal State
-    <input type="text" [(ngModel)]="goalText" placeholder="1 2 3 4 5 6 7 8 0" />
+    Speed ({{ stepMs }} ms / step)
+    <input type="range" min="1" max="10" step="1" [(ngModel)]="speed" />
   </label>
 
   <a routerLink="/">Back to menu</a>
