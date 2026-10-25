@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, OnInit } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnInit, Output } from '@angular/core';
 import { States, Tile } from '../../models/tile';
 import { CommonModule } from '@angular/common';
 import { SolveService } from '../../services/solveService';
@@ -8,6 +8,17 @@ import { GameConfigService } from '../../services/gameConfigService';
 import { RouterLink } from '@angular/router';
 import { SearchTree } from '../search-tree/search-tree'
 import { SearchNode } from '../../models/tile';
+
+export interface BoardSnapshot {
+  start: number[];
+  goalText: string;
+  speed: number;
+}
+
+export interface SolveInfo {
+  steps: number;
+  time: number | null;
+}
 
 @Component({
   selector: 'app-board',
@@ -29,8 +40,30 @@ export class Board implements OnInit {
   searchTree: SearchNode[] = [];
   showTree = false;
   speed = 6;
+
+  @Input() isReadOnly: boolean = false; 
+  @Input() title: string = ''; 
+  @Input() stats: any = { steps: 0, time: null };
+
+  @Input() showHeader = false;         
+  @Input() showSolve = true;           
+  @Input() holdAnimation = false;       
+  private waiting = false;
+  @Input() agentKey: 'algoA' | 'algoB' = 'algoA'; 
+
+  @Output() stateChange = new EventEmitter<BoardSnapshot>();
+  @Output() solved = new EventEmitter<SolveInfo>();        
+  @Output() finished = new EventEmitter<void>();           
+
+  get algorithmLabel(): string {
+    const name = String(this.algorithm).toUpperCase();
+    const usesHeuristic = ['ASTAR', 'A_STAR', 'A*', 'GREEDY'].includes(name);
+    return usesHeuristic ? `${name} (${this.heuristic})` : name;
+  }
+  
   get stepMs(): number {
-    return 2200 - this.speed * 200;
+    if (this.speed <= 10) return 2200 - this.speed * 200;
+    return Math.round(200 / Math.pow(2, this.speed - 10));
   }
 
   get transitionMs(): number {
@@ -66,22 +99,29 @@ private gameConfig = inject(GameConfigService);
 
   constructor(private solveService: SolveService) { }
 
-  ngOnInit() { const cfg = this.gameConfig.config();
-    
+  private get storageKeys() {
+    const sfx = this.agentKey === 'algoB' ? 'B' : '';
+    return { algo: 'savedAlgo' + sfx, heuristic: 'savedHeuristic' + sfx };
+  }
+
+  ngOnInit() {
+    const cfg: any = this.gameConfig.config();
+    const keys = this.storageKeys;
+
     if (cfg) {
-      this.algorithm = cfg.algoA.algorithm;
-      this.heuristic = cfg.algoA.heuristic ?? 'manhattan';
-      
-      localStorage.setItem('savedAlgo', this.algorithm);
-      localStorage.setItem('savedHeuristic', this.heuristic);
+      const agent = cfg[this.agentKey] ?? cfg.algoA;
+      this.algorithm = agent.algorithm;
+      this.heuristic = agent.heuristic ?? 'manhattan';
+
+      localStorage.setItem(keys.algo, this.algorithm);
+      localStorage.setItem(keys.heuristic, this.heuristic);
     } else {
-      const savedAlgo = localStorage.getItem('savedAlgo');
-      const savedHeuristic = localStorage.getItem('savedHeuristic');
-      console.log('Saved Algorithm:', savedAlgo);
-      
+      const savedAlgo = localStorage.getItem(keys.algo);
+      const savedHeuristic = localStorage.getItem(keys.heuristic);
+
       if (savedAlgo) {
         this.algorithm = savedAlgo as SolveRequest['algorithm'];
-        this.heuristic = savedHeuristic as Heuristic;
+        this.heuristic = (savedHeuristic as Heuristic) ?? 'manhattan';
       }
     }
   }
@@ -94,20 +134,28 @@ private gameConfig = inject(GameConfigService);
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private runId = 0;
+
   async start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    const run = this.runId;
 
     await this.delay(500);
+    if (run !== this.runId) return;
     this.currentTiles = this.path[0].tiles;
     await this.delay(500);
+    if (run !== this.runId) return;
 
     for (let i = 1; i < this.path.length; i++) {
       this.currentTiles = this.path[i].tiles;
+      this.stats = { ...this.stats, steps: i };
       await this.delay(this.stepMs);
+      if (run !== this.runId) return;
     }
     this.currentTiles = this.currentTiles.filter(tile => tile.value !== 0);
     this.isRunning = false;
+    this.finished.emit();
   }
 
   trackByTile(index: number, tile: Tile): number {
@@ -142,20 +190,25 @@ private gameConfig = inject(GameConfigService);
     return res;
   }
 
-  async solvePuzzle() {
+  validate(): boolean {
     if (this.currentTiles.length > 0 && this.currentTiles.length < 8) {
       alert("Please place all 8 tiles on the board before solving.");
-      return;
+      return false;
     }
     if (this.startText === this.goalText) {
       alert("The start state is the same as the goal state. No moves needed.");
-      return;
+      return false;
     }
     if (this.startText == '0 0 0 0 0 0 0 0 0') {
       alert("Please place all 8 tiles on the board before solving.");
-      return;
+      return false;
     }
-    
+    return true;
+  }
+
+  async solvePuzzle() {
+    if (!this.validate()) return;
+
     console.log("Start Text:", this.startText);
     console.log("Goal Text:", this.goalText);
     console.log("Algorithm:", this.algorithm);
@@ -172,13 +225,16 @@ private gameConfig = inject(GameConfigService);
       return;
     }
 
+    const token = this.runId;
     this.solveService.solve(request).subscribe({
       next: (response: any) => {
+        if (token !== this.runId) return; 
         if (response.error) {
           this.searchTree = [];
           this.showTree = false;
           alert(response.error);
           this.resetBoard();
+          this.finished.emit();
           return;
         }
 
@@ -186,20 +242,27 @@ private gameConfig = inject(GameConfigService);
           this.searchTree = response.tree ?? [];
           this.showTree = false;
           this.path = this.map_(response.path);
-          
-          console.log("Mapped path:", this.path);
-          console.log('tree size:', response.tree?.length);
-          
-          this.start();
+
+          const time: number | null = response.time ?? null;
+          this.stats = { steps: 0, time };
+          if (this.holdAnimation) {
+            this.waiting = true;
+            this.isRunning = true;
+          }
+          this.solved.emit({ steps: response.path.length - 1, time });
+          if (!this.holdAnimation) this.start();
         } else {
           alert("Could not find a solution for this configuration.");
           this.resetBoard();
+          this.finished.emit();
         }
       },
       error: (error: any) => {
+        if (token !== this.runId) return;
         console.error("Error occurred while solving the puzzle:", error);
         alert("Server error occurred. Please try again.");
         this.resetBoard();
+        this.finished.emit();
       }
     });
   }
@@ -215,10 +278,12 @@ private gameConfig = inject(GameConfigService);
   }
 
   selectFromSidebar(tile: { value: number }) {
+    if (this.isReadOnly) return;
     this.selectedTile = tile;
   }
 
   placeOnBoard(row: number, col: number) {
+    if (this.isReadOnly) return;
     if (!this.selectedTile) return;
     const isOccupied = this.currentTiles.some(t => t.row === row && t.col === col);
     if (isOccupied) return;
@@ -234,6 +299,7 @@ private gameConfig = inject(GameConfigService);
   }
 
   returnToSidebar(tile: any) {
+    if (this.isReadOnly) return;
     if (tile.value === 0) return;
     this.currentTiles = this.currentTiles.filter(t => t !== tile);
     if (!this.availableTiles.some(t => t.value === tile.value)) {
@@ -250,6 +316,7 @@ private gameConfig = inject(GameConfigService);
       boardState[index] = tile.value;
     });
     this.startText = boardState.join(' ');
+    this.emitState();
   }
 
   isValidState(arr: number[]): boolean {
@@ -270,11 +337,15 @@ private gameConfig = inject(GameConfigService);
     this.currentTiles = state
       .map((value, i) => ({ value, row: Math.floor(i / 3), col: i % 3 }))
       .filter(t => t.value !== 0);
-    this.availableTiles = [];
+    const placed = new Set(state);
+    this.availableTiles = [1, 2, 3, 4, 5, 6, 7, 8]
+      .filter(v => !placed.has(v))
+      .map(value => ({ value }));
     this.selectedTile = null;
     this.path = [];
     this.searchTree = [];
     this.showTree = false;
+    this.stats = { steps: 0, time: null };
     this.updateStartText();
   }
 
@@ -299,9 +370,59 @@ private gameConfig = inject(GameConfigService);
       goal = this.shuffled();
     } while (goal.join(' ') === start.join(' '));   
     this.goalText = goal.join(' ');
+    this.emitState();
     this.path = [];
     this.searchTree = [];
     this.showTree = false;
   }
+  
+  public stop() {
+    this.runId++;
+    this.waiting = false;
+    this.isRunning = false;
+  }
 
+  public play() {
+    if (!this.waiting) return;
+    this.waiting = false;
+    this.isRunning = false;
+    this.start();
+  }
+
+  public cancelWait() {
+    if (!this.waiting) return;
+    this.waiting = false;
+    this.isRunning = false;
+    this.finished.emit();
+  }
+
+  private emitState() {
+    this.stateChange.emit({
+      start: this.parse(this.startText),
+      goalText: this.goalText,
+      speed: this.speed,
+    });
+  }
+
+  onGoalChange(value: string) {
+    this.goalText = value;
+    this.emitState();
+  }
+
+  onSpeedChange(value: number) {
+    this.speed = Number(value);
+    this.emitState();
+  }
+
+  public sync(s: BoardSnapshot) {
+    this.goalText = s.goalText;
+    this.speed = s.speed;
+    if (this.isRunning) return;
+    if (this.startText !== s.start.join(' ')) this.setBoard(s.start);
+  }
+
+  public resetToStart() {
+    if (this.isRunning) return;
+    this.setBoard(this.parse(this.startText));
+  }
 }

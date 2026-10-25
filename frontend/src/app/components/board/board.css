@@ -419,3 +419,28 @@
     grid-template-columns: repeat(4, 72px);
   }
 }
+
+.agent-title {
+  position: relative;
+  z-index: 2;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.agent-title h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--ink);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.agent-title p {
+  margin: 4px 0 0;
+  font-family: var(--ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: var(--dim);
+}

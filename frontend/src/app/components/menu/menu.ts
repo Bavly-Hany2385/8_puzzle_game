@@ -112,6 +112,8 @@ export class Menu {
     if (m.id === 'agents') config.algoB = ALGOS[c['algoB']];
     if (m.id === 'human') config.first = ['Human', 'Agent', 'Simultaneous'][c['first']] as GameConfig['first'];
     this.store.config.set(config);
+    console.log('Starting game with config:', config);
+    console.log('Navigating to route:', m.route);
     this.router.navigate([m.route]);
   }
 

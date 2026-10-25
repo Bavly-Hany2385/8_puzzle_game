@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI
 from enum import Enum
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ from iterative_deepening import iterative_deepening as depth_limited_search
 from solvability import is_solvable  
 
 from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
 
 app.add_middleware(
@@ -42,9 +44,11 @@ def solve(request: SolveRequest):
             "error": "Unsolvable puzzle configuration.",
             "path": None,
             "cost": None,
-            "tree": []
+            "tree": [],
+            "time": None,
         }
 
+    t0 = time.perf_counter()
     if request.algorithm == "bfs":
         solver = bfs_search
         path, tree = solver(start, goal)
@@ -59,8 +63,12 @@ def solve(request: SolveRequest):
         path ,tree= solver(start, goal, heuristic=request.heuristic)
     else:
         return {"error": "Invalid algorithm specified."}
+
+    elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+
     return {
         "path": path,
-        "cost": len(path) - 1 if path else None, 
-        "tree": tree 
+        "cost": len(path) - 1 if path else None,
+        "tree": tree,
+        "time": elapsed_ms,  
     }

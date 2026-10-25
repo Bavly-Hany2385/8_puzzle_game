@@ -1,6 +1,10 @@
-<div class="game-wrapper">
+<div class="agent-title" *ngIf="showHeader">
+  <h3>{{ title || algorithmLabel }}</h3>
+  <p>Steps: {{ stats.steps }} | Time: {{ stats.time !== null ? stats.time + ' ms' : '—' }}</p>
+</div>
+<div class="game-wrapper" [style.margin]="showHeader ? '10px auto 24px' : '50px auto 24px'">
   
-  <div class="sidebar">
+  <div class="sidebar" *ngIf="!isReadOnly">
     <div 
       *ngFor="let tile of availableTiles" 
       class="sidebar-tile"
@@ -31,12 +35,12 @@
   </div>
 </div>
 
-<div class="controls">
+<div class="controls" *ngIf="!isReadOnly">
 
   <div class="goal-row">
     <label>
       Goal State
-      <input type="text" [(ngModel)]="goalText" placeholder="1 2 3 4 5 6 7 8 0" />
+      <input type="text" [ngModel]="goalText" (ngModelChange)="onGoalChange($event)" placeholder="1 2 3 4 5 6 7 8 0" />
     </label>
 
     @if (goalPreview.length) {
@@ -55,11 +59,11 @@
 
   <label>
     Speed ({{ stepMs }} ms / step)
-    <input type="range" min="1" max="10" step="1" [(ngModel)]="speed" />
+    <input type="range" min="1" max="13" step="1" [ngModel]="speed" (ngModelChange)="onSpeedChange($event)" />
   </label>
 
   <a routerLink="/">Back to menu</a>
-  <a class="start-button" (click)="solvePuzzle()">Solve</a>
+  <a class="start-button" *ngIf="showSolve" (click)="solvePuzzle()">Solve</a>
   <button (click)="showTree = !showTree" [disabled]="!searchTree.length">
   {{ showTree ? 'Hide' : 'Show' }} search tree
   </button>

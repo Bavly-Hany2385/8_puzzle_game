@@ -1,0 +1,37 @@
+<div class="battle-container">
+  <header class="battle-header">
+    <h2>AGENT WARS</h2>
+    <div class="battle-controls">
+      <button class="go" (click)="startBattle()" [disabled]="battling">Start battle</button>
+      <button (click)="reset()">{{ battling ? 'Stop' : 'Reset' }}</button>
+    </div>
+    @if (winner) {
+      <p class="winner">{{ winner }}</p>
+    }
+  </header>
+
+  <div class="battle-arena">
+    <app-board
+      #board1
+      agentKey="algoA"
+      [showHeader]="true"
+      [holdAnimation]="true"
+      [showSolve]="false"
+      (stateChange)="onMasterChange($event)"
+      (solved)="onSolved(0, $event)"
+      (finished)="onFinished()">
+    </app-board>
+
+    <h1 class="vs">VS</h1>
+
+    <app-board
+      #board2
+      agentKey="algoB"
+      [isReadOnly]="true"
+      [showHeader]="true"
+      [holdAnimation]="true"
+      (solved)="onSolved(1, $event)"
+      (finished)="onFinished()">
+    </app-board>
+  </div>
+</div>
