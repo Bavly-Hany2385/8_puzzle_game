@@ -20,6 +20,17 @@ export interface SolveInfo {
   time: number | null;
 }
 
+export interface SolveStats {
+  steps: number;        
+  total: number;          
+  time: number | null;
+  expanded: number | null;
+  depth: number | null;
+}
+
+const emptyStats = (): SolveStats =>
+  ({ steps: 0, total: 0, time: null, expanded: null,depth: null });
+
 @Component({
   selector: 'app-board',
   imports: [CommonModule , FormsModule , RouterLink, SearchTree],
@@ -40,10 +51,13 @@ export class Board implements OnInit {
   searchTree: SearchNode[] = [];
   showTree = false;
   speed = 6;
+  paused = false;
+  private wasPaused = false;
+
 
   @Input() isReadOnly: boolean = false; 
   @Input() title: string = ''; 
-  @Input() stats: any = { steps: 0, time: null };
+  // @Input() stats: any = { steps: 0, time: null };
 
   @Input() showHeader = false;         
   @Input() showSolve = true;           
@@ -55,12 +69,20 @@ export class Board implements OnInit {
   @Output() solved = new EventEmitter<SolveInfo>();        
   @Output() finished = new EventEmitter<void>();           
 
+@Input() stats: SolveStats = emptyStats();
+moves: string[] = [];
+
   get algorithmLabel(): string {
     const name = String(this.algorithm).toUpperCase();
     const usesHeuristic = ['ASTAR', 'A_STAR', 'A*', 'GREEDY'].includes(name);
     return usesHeuristic ? `${name} (${this.heuristic})` : name;
   }
   
+  private computeMoves(path: number[][]): string[] {
+  const names: Record<number, string> = { [-3]: 'Up', [3]: 'Down', [-1]: 'Left', [1]: 'Right' };
+  return path.slice(1).map((s, i) => names[s.indexOf(0) - path[i].indexOf(0)]);
+}
+
   get stepMs(): number {
     if (this.speed <= 10) return 2200 - this.speed * 200;
     return Math.round(200 / Math.pow(2, this.speed - 10));
@@ -147,25 +169,31 @@ private gameConfig = inject(GameConfigService);
     await this.delay(500);
     if (run !== this.runId) return;
 
-    for (let i = 1; i < this.path.length; i++) {
-      this.currentTiles = this.path[i].tiles;
-      this.stats = { ...this.stats, steps: i };
-      await this.delay(this.stepMs);
-      if (run !== this.runId) return;
-    }
+for (let i = 1; i < this.path.length; i++) {
+  await this.waitIfPaused();
+  if (run !== this.runId) return;
+  this.currentTiles = this.path[i].tiles;
+  this.stats = { ...this.stats, steps: i };
+  await this.delay(this.stepMs);
+  if (run !== this.runId) return;
+}
     this.currentTiles = this.currentTiles.filter(tile => tile.value !== 0);
     this.isRunning = false;
     this.finished.emit();
   }
+
 
   trackByTile(index: number, tile: Tile): number {
     return tile.value;
   }
 
   @HostListener('document:keydown.escape')
-  closeTree() {
-    this.showTree = false;
-  }
+closeTree() {
+  if (!this.showTree) return;
+  this.showTree = false;
+  this.paused = this.wasPaused;
+  if (!this.paused) this.releasePause();
+}
 
   // path is initially a list of states and each state is a tuple of numbers 
   // we need to convert it to a list of states where each state is an object of type States
@@ -207,6 +235,7 @@ private gameConfig = inject(GameConfigService);
   }
 
   async solvePuzzle() {
+    if(this.isRunning) return;
     if (!this.validate()) return;
 
     console.log("Start Text:", this.startText);
@@ -242,9 +271,19 @@ private gameConfig = inject(GameConfigService);
           this.searchTree = response.tree ?? [];
           this.showTree = false;
           this.path = this.map_(response.path);
-
+          this.moves = this.computeMoves(response.path);
+          console.log("Tree:", this.searchTree);
+          console.log("Path:", this.path);
           const time: number | null = response.time ?? null;
-          this.stats = { steps: 0, time };
+          // this.stats = { steps: 0, time };
+            const s = response.stats ?? {};
+  this.stats = {
+    steps: 0,
+    total: response.path.length - 1,
+    time,
+    expanded: s.nodes_expanded ?? null,
+    depth: s.search_depth ?? null,
+  };
           if (this.holdAnimation) {
             this.waiting = true;
             this.isRunning = true;
@@ -274,8 +313,14 @@ private gameConfig = inject(GameConfigService);
       { value: 4 }, { value: 5 }, { value: 6 },
       { value: 7 }, { value: 8 }
     ];
+    this.stats = emptyStats();
+this.moves = [];
     this.updateStartText();
   }
+  stopAnimation() {
+  this.stop();        
+  this.resetToStart(); 
+}
 
   selectFromSidebar(tile: { value: number }) {
     if (this.isReadOnly) return;
@@ -345,7 +390,9 @@ private gameConfig = inject(GameConfigService);
     this.path = [];
     this.searchTree = [];
     this.showTree = false;
-    this.stats = { steps: 0, time: null };
+    // this.stats = { steps: 0, time: null };
+    this.stats = emptyStats();
+    this.moves = [];
     this.updateStartText();
   }
 
@@ -376,11 +423,7 @@ private gameConfig = inject(GameConfigService);
     this.showTree = false;
   }
   
-  public stop() {
-    this.runId++;
-    this.waiting = false;
-    this.isRunning = false;
-  }
+
 
   public play() {
     if (!this.waiting) return;
@@ -425,4 +468,37 @@ private gameConfig = inject(GameConfigService);
     if (this.isRunning) return;
     this.setBoard(this.parse(this.startText));
   }
+
+  openTree() {
+  this.wasPaused = this.paused;
+  this.paused = true;
+  this.showTree = true;
+}
+
+private resumeFn: (() => void) | null = null;
+
+private waitIfPaused(): Promise<void> {
+  if (!this.paused) return Promise.resolve();
+  return new Promise(res => (this.resumeFn = res));
+}
+
+private releasePause() {
+  this.resumeFn?.();
+  this.resumeFn = null;
+}
+
+togglePause() {
+  this.paused = !this.paused;
+  if (!this.paused) this.releasePause();
+}
+
+
+
+public stop() {
+  this.runId++;
+  this.paused = false;
+  this.releasePause();    
+  this.waiting = false;
+  this.isRunning = false;
+}
 }

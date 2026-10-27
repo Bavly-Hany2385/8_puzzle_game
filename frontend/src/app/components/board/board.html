@@ -1,6 +1,5 @@
 <div class="agent-title" *ngIf="showHeader">
   <h3>{{ title || algorithmLabel }}</h3>
-  <p>Steps: {{ stats.steps }} | Time: {{ stats.time !== null ? stats.time + ' ms' : '—' }}</p>
 </div>
 <div class="game-wrapper" [style.margin]="showHeader ? '10px auto 24px' : '50px auto 24px'">
   
@@ -35,6 +34,25 @@
   </div>
 </div>
 
+@if (stats.total) {
+  <div class="stats-panel">
+    <div class="stat"><span>Steps</span><b>{{ stats.steps }} / {{ stats.total }}</b></div>
+    <div class="stat"><span>Cost</span><b>{{ stats.total }}</b></div>
+    <div class="stat"><span>Nodes expanded</span><b>{{ stats.expanded ?? '—' }}</b></div>
+    <div class="stat"><span>Search depth</span><b>{{ stats.depth ?? '—' }}</b></div>
+    <div class="stat"><span>Time</span><b>{{ stats.time !== null ? stats.time + ' ms' : '—' }}</b></div>
+
+    <!-- <div class="path">
+      <span>Path to goal</span>
+      <div class="moves">
+        @for (m of moves; track $index) {
+          <i [class.done]="$index < stats.steps" [class.now]="$index === stats.steps - 1">{{ m }}</i>
+        }
+      </div>
+    </div> -->
+  </div>
+}
+
 <div class="controls" *ngIf="!isReadOnly">
 
   <div class="goal-row">
@@ -63,18 +81,24 @@
   </label>
 
   <a routerLink="/">Back to menu</a>
-  <a class="start-button" *ngIf="showSolve" (click)="solvePuzzle()">Solve</a>
-  <button (click)="showTree = !showTree" [disabled]="!searchTree.length">
+<a class="start-button" *ngIf="showSolve" (click)="solvePuzzle()">Solve</a>
+<button *ngIf="showSolve" (click)="togglePause()" [disabled]="!isRunning">
+  {{ paused ? 'Resume' : 'Pause' }}
+</button>
+<button *ngIf="showSolve" (click)="stopAnimation()" [disabled]="!path.length && !isRunning">
+  Reset
+</button>
+<button (click)="showTree ? closeTree() : openTree()" [disabled]="!searchTree.length">
   {{ showTree ? 'Hide' : 'Show' }} search tree
-  </button>
+</button>
 
-  <div class="modal-backdrop" *ngIf="showTree" (click)="showTree = false">
+</div>
+<div class="modal-backdrop" *ngIf="showTree" (click)="closeTree()">
   <div class="modal-panel" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>Search tree ({{ searchTree.length }} nodes)</h3>
-      <button class="close-btn" (click)="showTree = false">✕</button>
+      <button class="close-btn" (click)="closeTree()">✕</button>
     </div>
     <app-search-tree class="modal-body" [nodes]="searchTree" [goal]="goalArray"></app-search-tree>
-  </div>
   </div>
 </div>

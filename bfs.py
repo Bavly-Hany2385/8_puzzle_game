@@ -6,7 +6,7 @@ def bfs(start_node, goal_node):
     record = TreeRecorder.TreeRecorder()
     frontier =  deque()
     frontier.append((start_node, record.add(start_node, parent = None)))
-    parent_map = {start_node: None}
+    # parent_map = {start_node: None}
     
     visited = set([start_node])
     
@@ -14,18 +14,18 @@ def bfs(start_node, goal_node):
         state, node_id = frontier.popleft()
         
         if state == goal_node:
-            return record.path_to_root(node_id), record.export_tree(node_id)
+            return record.path_to_root(node_id), record.export_tree(node_id), record.stats(node_id)
         
         children = help.generate_children(state)
-        
+        record.expanded += 1
         for child, move in children:
                 if  child not in visited: # I used only this instead of the condition  (child not in frontier and child not in visited) , 
                     #because it takes O(N) , so the node is marked as visited once its parent expandes 
                     visited.add(child)
-                    parent_map[child] = state
+                    # parent_map[child] = state
                     frontier.append((child, record.add(child, parent=node_id, move=move))) 
 
-    return None, []
+    return None, [], {}
 
 if __name__ == "__main__":
     start_node = (1,4,2,6,5,8,7,3,0) 

@@ -1,8 +1,14 @@
 class TreeRecorder:
     def __init__(self):
         self.nodes = []
+        self.depths = []
+        self.expanded = 0    
+        self.max_depth = 0 
 
     def add(self, state, parent, move=None):
+        depth = 0 if parent is None else self.depths[parent] + 1
+        self.depths.append(depth)
+        self.max_depth = max(self.max_depth, depth)
         self.nodes.append({
             "id": len(self.nodes),
             "state": list(state),
@@ -10,6 +16,14 @@ class TreeRecorder:
             "move": move
         })
         return len(self.nodes) - 1  #Return the id of the new node
+
+    def stats(self, goal_id):
+        return {
+            "cost": self.depths[goal_id],
+            "nodes_expanded": self.expanded,
+            "search_depth": self.max_depth,
+        }
+
     
     def path_to_root(self, node_id):
         path = []

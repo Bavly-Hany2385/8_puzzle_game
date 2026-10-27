@@ -51,16 +51,16 @@ def solve(request: SolveRequest):
     t0 = time.perf_counter()
     if request.algorithm == "bfs":
         solver = bfs_search
-        path, tree = solver(start, goal)
+        path, tree ,stats = solver(start, goal)
     elif request.algorithm == "dfs":
         solver = dfs_search
-        path, tree = solver(start, goal )
+        path, tree ,stats = solver(start, goal )
     elif request.algorithm == "iterative_deepening":
         solver = depth_limited_search
-        path ,tree= solver(start, goal, max_depth=100)
+        path ,tree, stats = solver(start, goal, max_depth=100)
     elif request.algorithm == "a_star":
         solver = A_star
-        path ,tree= solver(start, goal, heuristic=request.heuristic)
+        path ,tree, stats = solver(start, goal, heuristic=request.heuristic)
     else:
         return {"error": "Invalid algorithm specified."}
 
@@ -68,7 +68,7 @@ def solve(request: SolveRequest):
 
     return {
         "path": path,
-        "cost": len(path) - 1 if path else None,
         "tree": tree,
-        "time": elapsed_ms,  
+        "time": elapsed_ms,
+        "stats": stats,
     }

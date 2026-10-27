@@ -22,11 +22,11 @@ def A_star(start_node, goal_node , heuristic="manhattan"):
         priority , g , state, node_id = heapq.heappop(pq)
         
         if state == goal_node:
-            return record.path_to_root(node_id), record.export_tree(node_id)
+            return record.path_to_root(node_id), record.export_tree(node_id), record.stats(node_id)
         
         if g > cost_so_far.get(state, float("inf")): # like Dijkstra's algorithm, we skip processing if we have already found a better path to this state
             continue # the heap may contain multiple entries for the same state, but we only wanna process the one with the lowest cost matches the cost_so_far for that state
-            
+        record.expanded += 1
         children = help.generate_children(state)
 
         for child, move in children:
@@ -39,7 +39,7 @@ def A_star(start_node, goal_node , heuristic="manhattan"):
                 h = manhattan_heuristic(child, goal_node) if heuristic == "manhattan" else euclidean_heuristic(child, goal_node)
                 heapq.heappush(pq, (h + new_cost,  new_cost , child, child_id))
 
-    return None, []
+    return None, [] , {}
 
 if __name__ == "__main__":
     start_node = (1,0,2,7,5,4,8,6,3) 

@@ -3,12 +3,13 @@ import TreeRecorder
 
 def _depth_limited_search(current_node, current_id, goal_node, depth_limit, visited, record):
     if current_node == goal_node:
-        return record.path_to_root(current_id), record.export_tree(current_id)
+        return record.path_to_root(current_id), record.export_tree(current_id), record.stats(current_id)
 
     if depth_limit <= 0:
         return None
 
     visited.add(current_node)
+    record.expanded += 1
     children = help.generate_children(current_node)
 
     for child, move in children: 
@@ -24,13 +25,19 @@ def _depth_limited_search(current_node, current_id, goal_node, depth_limit, visi
     return None
 
 def iterative_deepening(current_node, goal_node, max_depth=100):
+    total_expanded = 0
+
     for depth_limit in range(max_depth + 1):
         visited = set()
         record = TreeRecorder.TreeRecorder()
-        start_id = record.add(current_node, parent=None) 
-        
-        result = _depth_limited_search(current_node, start_id, goal_node, depth_limit, visited, record)
-        if result is not None:
-            return result
+        start_id = record.add(current_node, parent=None)
 
-    return None, []
+        result = _depth_limited_search(current_node, start_id, goal_node, depth_limit, visited, record)
+        total_expanded += record.expanded
+
+        if result is not None:
+            path, tree, stats = result
+            stats["nodes_expanded"] = total_expanded
+            return path, tree, stats
+
+    return None, [], {}
