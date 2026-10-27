@@ -20,6 +20,11 @@ export interface SolveInfo {
   time: number | null;
 }
 
+export interface MoveInfo {
+  moves: number;     
+  solved: boolean;  
+}
+
 export interface SolveStats {
   steps: number;        
   total: number;          
@@ -58,6 +63,12 @@ export class Board implements OnInit {
   @Input() isReadOnly: boolean = false; 
   @Input() title: string = ''; 
   // @Input() stats: any = { steps: 0, time: null };
+
+  @Input() locked = false;             
+  humanPlay = false;                  
+  humanLocked = false;                 
+  humanMoves = 0;
+  @Output() moved = new EventEmitter<MoveInfo>();
 
   @Input() showHeader = false;         
   @Input() showSolve = true;           
@@ -323,12 +334,12 @@ this.moves = [];
 }
 
   selectFromSidebar(tile: { value: number }) {
-    if (this.isReadOnly) return;
+    if (this.isReadOnly || this.locked || this.humanPlay) return;
     this.selectedTile = tile;
   }
 
   placeOnBoard(row: number, col: number) {
-    if (this.isReadOnly) return;
+    if (this.isReadOnly || this.locked || this.humanPlay) return;
     if (!this.selectedTile) return;
     const isOccupied = this.currentTiles.some(t => t.row === row && t.col === col);
     if (isOccupied) return;
@@ -344,7 +355,7 @@ this.moves = [];
   }
 
   returnToSidebar(tile: any) {
-    if (this.isReadOnly) return;
+    if (this.isReadOnly || this.locked || this.humanPlay) return;
     if (tile.value === 0) return;
     this.currentTiles = this.currentTiles.filter(t => t !== tile);
     if (!this.availableTiles.some(t => t.value === tile.value)) {
@@ -493,6 +504,94 @@ togglePause() {
 }
 
 
+
+  get controlsLocked(): boolean {
+    return this.locked || this.humanPlay;
+  }
+
+  private isGoalReached(): boolean {
+    const goal = this.goalArray;
+    const cur: number[] = Array(9).fill(-1);
+    this.currentTiles.forEach(t => (cur[t.row * 3 + t.col] = t.value));
+    return goal.length === 9 && cur.every((v, i) => v === goal[i]);
+  }
+
+  public beginHumanPlay() {
+    this.currentTiles = this.parse(this.startText)
+      .map((value, i) => ({ value, row: Math.floor(i / 3), col: i % 3 }))
+      .sort((a, b) => a.value - b.value);
+    this.selectedTile = null;
+    this.humanPlay = true;
+    this.humanLocked = false;
+    this.humanMoves = 0;
+  }
+
+  public endHumanPlay() {
+    this.humanPlay = false;
+    this.humanLocked = false;
+    this.humanMoves = 0;
+  }
+
+  onTileClick(tile: Tile) {
+    if (this.humanPlay) this.slideTile(tile);
+    else this.returnToSidebar(tile);
+  }
+
+  public slideTile(tile: Tile): boolean {
+    if (!this.humanPlay || this.humanLocked || tile.value === 0) return false;
+    const empty = this.currentTiles.find(t => t.value === 0);
+    if (!empty) return false;
+    if (Math.abs(tile.row - empty.row) + Math.abs(tile.col - empty.col) !== 1) return false;
+
+    this.currentTiles = this.currentTiles.map(t =>
+      t === tile ? { ...t, row: empty.row, col: empty.col }
+      : t === empty ? { ...t, row: tile.row, col: tile.col }
+      : t);
+
+    this.humanMoves++;
+    this.moved.emit({ moves: this.humanMoves, solved: this.isGoalReached() });
+    return true;
+  }
+
+  public slideDir(dr: number, dc: number): boolean {
+    const empty = this.currentTiles.find(t => t.value === 0);
+    if (!empty) return false;
+    const tile = this.currentTiles.find(t => t.row === empty.row - dr && t.col === empty.col - dc);
+    return tile ? this.slideTile(tile) : false;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onHumanKey(e: KeyboardEvent) {
+    if (!this.humanPlay || this.humanLocked) return;
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    const dirs: Record<string, [number, number]> = {
+      ArrowUp: [-1, 0], w: [-1, 0], ArrowDown: [1, 0], s: [1, 0],
+      ArrowLeft: [0, -1], a: [0, -1], ArrowRight: [0, 1], d: [0, 1],
+    };
+    const d = dirs[e.key];
+    if (!d) return;
+    e.preventDefault();
+    this.slideDir(d[0], d[1]);
+  }
+
+  public beginManual(): boolean {
+    if (!this.waiting) return false;
+    this.waiting = false;               
+    this.currentTiles = this.path[0].tiles;
+    return true;
+  }
+
+  public stepForward(): boolean {
+    const next = this.stats.steps + 1;
+    if (next >= this.path.length) return true;
+    this.currentTiles = this.path[next].tiles;
+    this.stats = { ...this.stats, steps: next };
+    if (next < this.path.length - 1) return false;
+    this.currentTiles = this.currentTiles.filter(t => t.value !== 0);
+    this.isRunning = false;
+    return true;
+  }
 
 public stop() {
   this.runId++;

@@ -1,0 +1,179 @@
+:host {
+  --panel: rgba(18, 22, 25, .82);
+  --panel-line: rgba(255, 255, 255, .12);
+  --ink: #e9ece6;
+  --sel: #e9ece6;
+  --sel-ink: #14181a;
+  --orange: #e8892b;
+  --display: 'Lilita One', 'Arial Black', sans-serif;
+  --ui: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+
+  position: relative;
+  display: block;
+  min-height: 100vh;
+  padding: 1px 0 60px;
+  color: var(--ink);
+  background-color: #1b2327;
+  background-image:
+    linear-gradient(90deg, rgba(10, 14, 16, .55) 0%, rgba(10, 14, 16, .25) 45%, rgba(10, 14, 16, .35) 100%),
+    linear-gradient(0deg, rgba(10, 14, 16, .5), transparent 40%),
+    url('/bg.jpg');
+  background-position: center, center, center bottom;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+app-board {
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+}
+app-board::before,
+app-board::after {
+  display: none !important;
+}
+
+.battle-container {
+  position: relative;
+  z-index: 2;
+  padding: 24px 16px 0;
+}
+
+.battle-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  min-width: 320px;
+  margin: 0 auto 8px;
+  padding: 12px 24px 16px;
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-top: 4px solid var(--orange);
+  backdrop-filter: blur(3px);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, .55);
+}
+
+.battle-header h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 40px;
+  font-style: italic;
+  letter-spacing: .04em;
+  text-shadow: 3px 3px 0 #000;
+}
+
+.battle-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.battle-controls button {
+  padding: 10px 22px;
+  font-family: var(--ui);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--ink);
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid var(--panel-line);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color .1s, color .1s;
+}
+
+.battle-controls button.go {
+  background: var(--orange);
+  color: #14181a;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.battle-controls button:hover:not(:disabled) {
+  background: var(--sel);
+  color: var(--sel-ink);
+}
+
+.battle-controls button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.winner {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--orange);
+}
+
+.battle-arena {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.vs {
+  align-self: center;
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 56px;
+  font-style: italic;
+  color: var(--orange);
+  text-shadow: 3px 3px 0 #000;
+}
+.battle-header { min-width: 380px; gap: 8px; }
+
+.mode, .keys {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: #97a09b;
+}
+
+.status {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+
+.score {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.score .cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, .45);
+  border: 1px solid var(--panel-line);
+}
+
+.score .cell span {
+  font-family: var(--ui);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: #97a09b;
+}
+
+.score .cell b {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 32px;
+  text-shadow: 2px 2px 0 #000;
+}

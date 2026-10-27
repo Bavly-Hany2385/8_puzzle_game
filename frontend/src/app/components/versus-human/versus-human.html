@@ -1,0 +1,52 @@
+<div class="battle-container">
+  <header class="battle-header">
+    <h2>AGENT VS HUMAN</h2>
+    <p class="mode">{{ agentName }} · First move: {{ first }}</p>
+
+    <div class="score">
+      <div class="cell"><span>YOU</span><b>{{ humanMoves }}</b></div>
+      <div class="cell">
+        <span>AGENT</span>
+        <b>{{ agentMoves }}{{ agentTotal !== null ? ' / ' + agentTotal : '' }}</b>
+      </div>
+    </div>
+
+    <div class="battle-controls">
+      <button class="go" (click)="startRace()" [disabled]="phase !== 'setup'">Start race</button>
+      <button (click)="reset()">{{ phase === 'racing' || phase === 'solving' ? 'Give up' : 'Reset' }}</button>
+    </div>
+
+    @if (winner) {
+      <p class="winner">{{ winner }}</p>
+    } @else {
+      <p class="status">{{ status }}</p>
+    }
+    @if (phase === 'racing') {
+      <p class="keys">Click a tile next to the gap, or use arrow keys / WASD</p>
+    }
+  </header>
+
+  <div class="battle-arena">
+    <app-board
+      #human
+      [title]="'YOU'"
+      [showHeader]="true"
+      [showSolve]="false"
+      [locked]="phase !== 'setup'"
+      (stateChange)="onMasterChange($event)"
+      (moved)="onHumanMoved($event)">
+    </app-board>
+
+    <h1 class="vs">VS</h1>
+
+    <app-board
+      #agent
+      agentKey="algoA"
+      [isReadOnly]="true"
+      [showHeader]="true"
+      [holdAnimation]="true"
+      (solved)="onAgentSolved($event)"
+      (finished)="onAgentFinished()">
+    </app-board>
+  </div>
+</div>

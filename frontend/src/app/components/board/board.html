@@ -3,7 +3,7 @@
 </div>
 <div class="game-wrapper" [style.margin]="showHeader ? '10px auto 24px' : '50px auto 24px'">
   
-  <div class="sidebar" *ngIf="!isReadOnly">
+  <div class="sidebar" *ngIf="!isReadOnly && !humanPlay">
     <div 
       *ngFor="let tile of availableTiles" 
       class="sidebar-tile"
@@ -28,7 +28,7 @@
       [class.empty]="tile.value === 0"
       [style.transform]="'translate(' + (tile.col * 105) + 'px, ' + (tile.row * 105) + 'px)'"
       [style.transition-duration.ms]="transitionMs"
-      (click)="returnToSidebar(tile)">
+      (click)="onTileClick(tile)">
       {{ tile.value !== 0 ? tile.value : '' }}
     </div>
   </div>
@@ -58,7 +58,7 @@
   <div class="goal-row">
     <label>
       Goal State
-      <input type="text" [ngModel]="goalText" (ngModelChange)="onGoalChange($event)" placeholder="1 2 3 4 5 6 7 8 0" />
+      <input type="text" [readonly]="controlsLocked" [ngModel]="goalText" (ngModelChange)="onGoalChange($event)" placeholder="1 2 3 4 5 6 7 8 0" />
     </label>
 
     @if (goalPreview.length) {
@@ -71,8 +71,8 @@
   </div>
 
   <div class="gen-row">
-    <button (click)="generateRandomStart()" [disabled]="isRunning">Random start</button>
-    <button (click)="generateRandomGoal()" [disabled]="isRunning">Random goal</button>
+    <button (click)="generateRandomStart()" [disabled]="isRunning || controlsLocked">Random start</button>
+    <button (click)="generateRandomGoal()" [disabled]="isRunning || controlsLocked">Random goal</button>
   </div>
 
   <label>
