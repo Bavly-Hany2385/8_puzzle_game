@@ -70,7 +70,7 @@ export class Board implements OnInit {
   humanMoves = 0;
   @Output() moved = new EventEmitter<MoveInfo>();
 
-  @Input() showHeader = false;         
+  @Input() showHeader = true;         
   @Input() showSolve = true;           
   @Input() holdAnimation = false;       
   private waiting = false;
