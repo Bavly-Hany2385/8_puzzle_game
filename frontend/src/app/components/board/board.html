@@ -42,14 +42,14 @@
     <div class="stat"><span>Search depth</span><b>{{ stats.depth ?? '—' }}</b></div>
     <div class="stat"><span>Time</span><b>{{ stats.time !== null ? stats.time + ' ms' : '—' }}</b></div>
 
-    <!-- <div class="path">
+    <div class="path">
       <span>Path to goal</span>
       <div class="moves">
         @for (m of moves; track $index) {
           <i [class.done]="$index < stats.steps" [class.now]="$index === stats.steps - 1">{{ m }}</i>
         }
       </div>
-    </div> -->
+    </div>
   </div>
 }
 
